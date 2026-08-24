@@ -1,0 +1,18 @@
+[project]
+name = "nbmeta"
+version = "0.1.0"
+description = "CLI to manage role/env/nagios/ansible metadata in a NetBox IP Address description, looked up by FQDN."
+requires-python = ">=3.9"
+dependencies = [
+    "pynetbox>=7",
+]
+
+[project.scripts]
+nbmeta = "nbmeta.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["nbmeta"]
