@@ -16,7 +16,7 @@ from .client import (
     resolve_owner_ids,
 )
 from .description import merge_description, split_leading_json
-from .schema import DEFAULTS, ValidationError, require_role, validate_data
+from .schema import DEFAULTS, ValidationError, require_role, sanitize_env, validate_data
 
 TABLE_COLUMNS = [("hostname", "Hostname"), ("role", "Role"), ("env", "Env"), ("nagios", "Nagios"), ("ansible", "Ansible")]
 DATA_FLAGS = ("role", "env", "nagios", "ansible")
@@ -163,6 +163,8 @@ def main(argv=None):
         return 0
 
     new_data = {f: getattr(args, f) for f in DATA_FLAGS if getattr(args, f) is not None}
+    if "env" in new_data:
+        new_data["env"] = sanitize_env(new_data["env"])
 
     try:
         validate_data(new_data)

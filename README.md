@@ -29,6 +29,9 @@ The metadata block only ever holds four keys:
 playbook is sourced from, and `nagios`/`ansible` control whether the host
 should be monitored by Nagios / managed by the Ansible controller.
 
+`env` is sanitized before being stored: any `/` or `-` in the value is
+converted to `_` (e.g. `--env feature/foo-bar` is stored as `feature_foo_bar`).
+
 Defaults are only applied to fill in keys that are missing after the merge —
 they never overwrite a value you already set, so partial updates (e.g. just
 flipping `--nagios false`) are safe.

@@ -13,6 +13,11 @@ class ValidationError(ValueError):
     pass
 
 
+def sanitize_env(value):
+    """Replace '/' and '-' with '_' so env values are safe to use as e.g. branch/path names."""
+    return value.replace("/", "_").replace("-", "_")
+
+
 def validate_data(data):
     """Validate the collected metadata fields against the nbmeta schema. Raises ValidationError;
     returns data unchanged. Whether 'role' must be present is checked separately by
