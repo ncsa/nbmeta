@@ -16,7 +16,7 @@ from .client import (
     resolve_owner_ids,
 )
 from .description import merge_description, split_leading_json
-from .schema import DEFAULTS, ValidationError, require_role, sanitize_env, validate_data
+from .schema import DEFAULTS, ValidationError, sanitize_env, validate_data
 
 TABLE_COLUMNS = [("hostname", "Hostname"), ("role", "Role"), ("env", "Env"), ("nagios", "Nagios"), ("ansible", "Ansible")]
 DATA_FLAGS = ("role", "env", "nagios", "ansible")
@@ -46,7 +46,7 @@ def parse_args(argv=None):
             "With --list, this is instead a regex matched against the start of dns_name."
         ),
     )
-    parser.add_argument("--role", help="Playbook to run against the host. Required unless already set.")
+    parser.add_argument("--role", help="Playbook to run against the host. Defaults to 'default' on first-time creation.")
     parser.add_argument("--env", help="Branch the playbook should be sourced from. Defaults to prod_a on first-time creation.")
     parser.add_argument(
         "--nagios",
@@ -88,11 +88,8 @@ def parse_args(argv=None):
     if args.list:
         if given:
             parser.error(f"--list cannot be combined with --{'/--'.join(given)}")
-    else:
-        if not args.fqdn:
-            parser.error("fqdn is required unless --list is given")
-        if not given:
-            parser.error("at least one of --role, --env, --nagios, --ansible is required")
+    elif not args.fqdn:
+        parser.error("fqdn is required unless --list is given")
 
     return args
 
@@ -175,13 +172,6 @@ def main(argv=None):
     try:
         ip = find_ip_address(nb, args.fqdn, owner_ids)
     except IPAddressLookupError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    existing, _ = split_leading_json(ip.description or "")
-    try:
-        require_role(existing, new_data)
-    except ValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

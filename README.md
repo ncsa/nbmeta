@@ -16,14 +16,15 @@ Given a host's FQDN, `nbmeta`:
 4. Writes the updated description back to NetBox via its REST API.
 5. Prints a success or error message and exits with the matching status code.
 
-The metadata block only ever holds four keys:
+The metadata block only ever holds four keys, all optional, each with a
+default that's applied on first-time creation only:
 
-| Key       | Type    | Required                              | Default (first-time creation only) |
-|-----------|---------|----------------------------------------|-------------------------------------|
-| `role`    | string  | yes, unless already set on the entry   | —                                   |
-| `env`     | string  | no                                      | `prod_a`                            |
-| `nagios`  | boolean | no                                      | `true`                              |
-| `ansible` | boolean | no                                      | `true`                              |
+| Key       | Type    | Default   |
+|-----------|---------|-----------|
+| `role`    | string  | `default` |
+| `env`     | string  | `prod_a`  |
+| `nagios`  | boolean | `true`    |
+| `ansible` | boolean | `true`    |
 
 `role` is the playbook to run against the host, `env` is the branch the
 playbook is sourced from, and `nagios`/`ansible` control whether the host
@@ -67,7 +68,13 @@ export NETBOX_OWNERS=team-a,team-b
 
 ## Quick guide
 
-Set the role on a new host (fills in the defaults for `env`, `nagios`, `ansible`):
+Tag a new host with all defaults (`role=default`, `env=prod_a`, `nagios=true`, `ansible=true`):
+
+```bash
+nbmeta host.example.com
+```
+
+Set the role on a new host (still fills in the defaults for `env`, `nagios`, `ansible`):
 
 ```bash
 nbmeta host.example.com --role proxmox

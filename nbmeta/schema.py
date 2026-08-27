@@ -3,6 +3,7 @@
 ALLOWED_KEYS = {"role", "env", "nagios", "ansible"}
 
 DEFAULTS = {
+    "role": "default",
     "env": "prod_a",
     "nagios": True,
     "ansible": True,
@@ -20,8 +21,7 @@ def sanitize_env(value):
 
 def validate_data(data):
     """Validate the collected metadata fields against the nbmeta schema. Raises ValidationError;
-    returns data unchanged. Whether 'role' must be present is checked separately by
-    require_role(), since it may already be set in the existing description.
+    returns data unchanged.
     """
     unknown = set(data) - ALLOWED_KEYS
     if unknown:
@@ -40,9 +40,3 @@ def validate_data(data):
             raise ValidationError(f"'{key}' must be a boolean")
 
     return data
-
-
-def require_role(existing, new_data):
-    """Ensure 'role' is set either already in the existing description or via --role."""
-    if "role" not in existing and "role" not in new_data:
-        raise ValidationError("'role' is required (pass --role, or it must already be set in the existing description)")
