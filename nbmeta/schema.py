@@ -1,6 +1,6 @@
 """Validation for the nbmeta metadata fields (--role/--env/--nagios/--ansible)."""
 
-ALLOWED_KEYS = {"role", "env", "nagios", "ansible"}
+ALLOWED_KEYS = {"role", "env", "group", "nagios", "ansible"}
 
 DEFAULTS = {
     "role": "default",
@@ -34,6 +34,9 @@ def validate_data(data):
 
     if "env" in data and (not isinstance(data["env"], str) or not data["env"].strip()):
         raise ValidationError("'env' must be a non-empty string")
+
+    if "group" in data and (not isinstance(data["group"], str) or not data["group"].strip()):
+        raise ValidationError("'group' must be a non-empty string")
 
     for key in ("nagios", "ansible"):
         if key in data and not isinstance(data[key], bool):

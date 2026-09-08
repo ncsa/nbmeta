@@ -1,4 +1,4 @@
-"""CLI: merge role/env/nagios/ansible metadata into a NetBox IP Address description, looked up by FQDN."""
+"""CLI: merge role/env/group/nagios/ansible metadata into a NetBox IP Address description, looked up by FQDN."""
 import argparse
 import re
 import sys
@@ -18,8 +18,8 @@ from .client import (
 from .description import merge_description, split_leading_json
 from .schema import DEFAULTS, ValidationError, sanitize_env, validate_data
 
-TABLE_COLUMNS = [("hostname", "Hostname"), ("role", "Role"), ("env", "Env"), ("nagios", "Nagios"), ("ansible", "Ansible")]
-DATA_FLAGS = ("role", "env", "nagios", "ansible")
+TABLE_COLUMNS = [("hostname", "Hostname"), ("role", "Role"), ("env", "Env"), ("group", "Group"), ("nagios", "Nagios"), ("ansible", "Ansible")]
+DATA_FLAGS = ("role", "env", "group", "nagios", "ansible")
 
 
 def _bool_flag(value):
@@ -34,7 +34,7 @@ def _bool_flag(value):
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description=(
-            "Look up a NetBox IP Address by FQDN (dns_name) and merge role/env/nagios/ansible "
+            "Look up a NetBox IP Address by FQDN (dns_name) and merge role/env/group/nagios/ansible "
             "metadata into the front of its description field."
         )
     )
@@ -48,6 +48,14 @@ def parse_args(argv=None):
     )
     parser.add_argument("--role", help="Playbook to run against the host. Defaults to 'default' on first-time creation.")
     parser.add_argument("--env", help="Branch the playbook should be sourced from. Defaults to prod_a on first-time creation.")
+    parser.add_argument(
+        "--group",
+        help=(
+            "Which group_structure/<role>.yml node this host belongs to, for sync-inventory's "
+            "nested-group support. No default -- only meaningful if --role has a matching "
+            "group_structure file; otherwise ignored."
+        ),
+    )
     parser.add_argument(
         "--nagios",
         type=_bool_flag,
@@ -77,7 +85,7 @@ def parse_args(argv=None):
         action="store_true",
         help=(
             "List IP Address entries owned by NETBOX_OWNERS as a table "
-            "(hostname, role, env, nagios, ansible). Optionally pass a regex "
+            "(hostname, role, env, group, nagios, ansible). Optionally pass a regex "
             "as the fqdn argument to only list entries whose dns_name matches it "
             "from the start, e.g. `nbmeta --list wiki`."
         ),
