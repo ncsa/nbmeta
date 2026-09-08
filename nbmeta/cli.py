@@ -85,19 +85,34 @@ def parse_args(argv=None):
         action="store_true",
         help=(
             "List IP Address entries owned by NETBOX_OWNERS as a table "
-            "(hostname, role, env, group, nagios, ansible). Optionally pass a regex "
-            "as the fqdn argument to only list entries whose dns_name matches it "
-            "from the start, e.g. `nbmeta --list wiki`."
+            "(hostname, role, env, group, nagios, ansible), restricted to entries "
+            "that at least have role configured. Optionally pass a "
+            "regex as the fqdn argument to only list entries whose dns_name matches "
+            "it from the start, e.g. `nbmeta --list wiki`. See --list-all to include "
+            "entries that aren't tagged at all."
+        ),
+    )
+    parser.add_argument(
+        "-la",
+        "--list-all",
+        action="store_true",
+        help=(
+            "Like --list, but includes every IP Address entry owned by NETBOX_OWNERS, "
+            "even ones with no role configured."
         ),
     )
     args = parser.parse_args(argv)
 
+    is_list = args.list or args.list_all
     given = [f for f in DATA_FLAGS if getattr(args, f) is not None]
-    if args.list:
+    if args.list and args.list_all:
+        parser.error("--list and --list-all cannot be combined")
+    elif is_list:
         if given:
-            parser.error(f"--list cannot be combined with --{'/--'.join(given)}")
+            flag = "--list-all" if args.list_all else "--list"
+            parser.error(f"{flag} cannot be combined with --{'/--'.join(given)}")
     elif not args.fqdn:
-        parser.error("fqdn is required unless --list is given")
+        parser.error("fqdn is required unless --list/--list-all is given")
 
     return args
 
@@ -115,6 +130,10 @@ def _table_row(ip):
     row = {"hostname": ip.dns_name or ""}
     row.update({key: _cell(existing.get(key)) for key, _ in TABLE_COLUMNS[1:]})
     return row
+
+
+def _is_filled_in(row):
+    return row["role"] != ""
 
 
 def _print_table(rows):
@@ -151,19 +170,22 @@ def main(argv=None):
         print(f"error: could not reach NetBox: {exc}", file=sys.stderr)
         return 1
 
-    if args.list:
+    if args.list or args.list_all:
         pattern = None
         if args.fqdn:
             try:
                 pattern = re.compile(args.fqdn)
             except re.error as exc:
-                print(f"error: invalid --list pattern {args.fqdn!r}: {exc}", file=sys.stderr)
+                flag = "--list-all" if args.list_all else "--list"
+                print(f"error: invalid {flag} pattern {args.fqdn!r}: {exc}", file=sys.stderr)
                 return 1
         rows = [
             _table_row(ip)
             for ip in list_ip_addresses(nb, owner_ids)
             if ip.dns_name and (pattern is None or pattern.match(ip.dns_name))
         ]
+        if args.list:
+            rows = [row for row in rows if _is_filled_in(row)]
         _print_table(rows)
         return 0
 

@@ -16,24 +16,25 @@ Given a host's FQDN, `nbmeta`:
 4. Writes the updated description back to NetBox via its REST API.
 5. Prints a success or error message and exits with the matching status code.
 
-The metadata block only ever holds five keys, all optional. Four have a
-default that's applied on first-time creation only; `group` has no default
-at all:
+The metadata block only ever holds five keys, all optional, each with a
+default that's applied on first-time creation only:
 
-| Key       | Type    | Default   |
-|-----------|---------|-----------|
-| `role`    | string  | `default` |
-| `env`     | string  | `prod_a`  |
-| `group`   | string  | *(none)*  |
-| `nagios`  | boolean | `true`    |
-| `ansible` | boolean | `true`    |
+| Key       | Type    | Default              |
+|-----------|---------|----------------------|
+| `role`    | string  | `default`            |
+| `env`     | string  | `prod_a`             |
+| `group`   | string  | *(same as `role`)*   |
+| `nagios`  | boolean | `true`               |
+| `ansible` | boolean | `true`               |
 
 `role` is the playbook to run against the host, `env` is the branch the
 playbook is sourced from, and `nagios`/`ansible` control whether the host
 should be monitored by Nagios / managed by the Ansible controller. `group`
 is only meaningful if sync-inventory's `--role` has a matching
 `group_structure/<role>.yml` describing a nested group shape — it names
-which node of that shape the host belongs to, and is otherwise ignored.
+which node of that shape the host belongs to, and is otherwise ignored. If
+`--group` isn't passed, it defaults to whatever `role` ends up being (either
+the `--role` you passed, or `role`'s own default/existing value).
 
 `env` is sanitized before being stored: any `/` or `-` in the value is
 converted to `_` (e.g. `--env feature/foo-bar` is stored as `feature_foo_bar`).
@@ -103,17 +104,25 @@ Skip the confirmation prompt (useful in scripts):
 nbmeta host.example.com --role proxmox -y
 ```
 
-List every entry owned by `NETBOX_OWNERS`:
+List entries owned by `NETBOX_OWNERS` that at least have `role` configured:
 
 ```bash
 nbmeta --list
 ```
 
-List only entries whose hostname starts with `wiki` (the argument is a regex
-matched against the start of `dns_name`):
+List every entry owned by `NETBOX_OWNERS`, including ones with no role
+configured at all:
+
+```bash
+nbmeta --list-all   # or: nbmeta -la
+```
+
+Either form accepts a regex as the fqdn argument to only list entries whose
+hostname starts with it (matched against the start of `dns_name`):
 
 ```bash
 nbmeta --list wiki
+nbmeta --list-all wiki
 ```
 
 By default (without `-y`/`--yes`), `nbmeta` prints the current and proposed

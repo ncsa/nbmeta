@@ -2,11 +2,17 @@
 
 ALLOWED_KEYS = {"role", "env", "group", "nagios", "ansible"}
 
+
+def _default_group(merged):
+    return merged["role"]
+
+
 DEFAULTS = {
     "role": "default",
     "env": "prod_a",
     "nagios": True,
     "ansible": True,
+    "group": _default_group,
 }
 
 
