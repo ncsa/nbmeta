@@ -1,5 +1,6 @@
 """CLI: merge role/env/group/nagios/ansible metadata into a NetBox IP Address description, looked up by FQDN."""
 import argparse
+import json
 import re
 import sys
 
@@ -101,6 +102,14 @@ def parse_args(argv=None):
             "even ones with no role configured."
         ),
     )
+    parser.add_argument(
+        "--export-to-json",
+        action="store_true",
+        help=(
+            "Print the --list/--list-all results to stdout as JSON instead of a table. "
+            "Only valid alongside --list or --list-all."
+        ),
+    )
     args = parser.parse_args(argv)
 
     is_list = args.list or args.list_all
@@ -113,6 +122,9 @@ def parse_args(argv=None):
             parser.error(f"{flag} cannot be combined with --{'/--'.join(given)}")
     elif not args.fqdn:
         parser.error("fqdn is required unless --list/--list-all is given")
+
+    if args.export_to_json and not is_list:
+        parser.error("--export-to-json can only be used alongside --list/--list-all")
 
     return args
 
@@ -186,7 +198,10 @@ def main(argv=None):
         ]
         if args.list:
             rows = [row for row in rows if _is_filled_in(row)]
-        _print_table(rows)
+        if args.export_to_json:
+            print(json.dumps(rows, indent=2))
+        else:
+            _print_table(rows)
         return 0
 
     new_data = {f: getattr(args, f) for f in DATA_FLAGS if getattr(args, f) is not None}
